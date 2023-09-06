@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Track Capabilities</title>
+</head>
+<body>
+    <h1>Video Track Capabilities</h1>
+    <pre id="output"></pre>
+    <button onclick="displayCapabilities()">Get Capabilities</button>
+
+    <script>
+        async function displayCapabilities() {
+            const output = document.getElementById('output');
+
+            try {
+                // 請求用戶的媒體許可
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const videoTrack = stream.getVideoTracks()[0];
+
+                // 建立一個假的 RTCPeerConnection
+                const pc = new RTCPeerConnection();
+                pc.addTrack(videoTrack, stream);
+
+                // 取得 codec 能力
+                const capabilities = RTCRtpSender.getCapabilities('video');
+                if (capabilities) {
+                    output.textContent += "=== Codecs ===\n";
+                    for (let codec of capabilities.codecs) {
+                        output.textContent += JSON.stringify(codec, null, 2) + "\n";
+
+                        if (codec.scalabilityMode) {
+                            output.textContent += "Supports scalabilityMode: " + codec.scalabilityMode + "\n\n";
+                        } else {
+                            output.textContent += "Does not support scalabilityMode.\n\n";
+                        }
+                    }
+                } else {
+                    output.textContent = 'No capabilities found.';
+                }
+
+                // 釋放資源
+                videoTrack.stop();
+                pc.close();
+
+            } catch (err) {
+                output.textContent = 'Error: ' + err.message;
+            }
+        }
+    </script>
+</body>
+</html>
